@@ -1,7 +1,10 @@
-"""Production wrapper: the same evaluators, applied to live traffic.
+"""Production wrapper: the label-free evaluators, applied to live traffic.
 
-`escalation_correct` is absent here by necessity -- it needs a human label.
-The over-refusal judge is its unlabelled stand-in.
+Two offline checks cannot come along, both because they read `CaseMeta`, which
+production does not have: `escalation_correct` needs `expected_action`, and
+`retrieval_recall` needs `answering_policy_ids`. The over-refusal judge is the
+unlabelled stand-in for the first; the second has none, so a retrieval
+regression surfaces here only indirectly, as faithfulness or over-refusal drift.
 
 The concurrency limits below are placeholders. An online evaluator that hits its
 limit drops the evaluation, so a limit set below peak throughput silently thins

@@ -1,7 +1,7 @@
 [project]
 name = "customer-support-eval"
 version = "0.1.0"
-description = "Add your description here"
+description = "Three-layer eval harness for a policy-grounded customer support agent"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [

@@ -19,7 +19,8 @@ Optional, for endpoints that do not implement the full OpenAI surface:
 
     {ROLE}_STRUCTURED_OUTPUT   tool | native | prompted
     {ROLE}_STRICT_TOOLS        true | false  (default: true)
-    {ROLE}_TEMPERATURE         float
+    {ROLE}_TEMPERATURE         float (judge defaults to 0.0; target to the
+                               provider default)
 
 `GEMINI_MODEL` is still honoured as the target model name.
 """
@@ -136,7 +137,10 @@ def _settings(role: Role, default_temperature: float | None) -> dict[str, Any]:
     return {} if temperature is None else {'temperature': temperature}
 
 
+# The target is left at the provider default unless asked otherwise: the point
+# of the harness is to grade the agent as it would actually be deployed.
 TARGET_MODEL = build_model('TARGET')
+TARGET_SETTINGS = _settings('TARGET', None)
 
 # Judges are graded instruments, not creative writers. Pinning temperature means
 # a rerun of the same gold set moves only when the rubric moves, which is what

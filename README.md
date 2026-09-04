@@ -14,14 +14,18 @@ and Logfire, on Gemini.
 | `evaluators.py` | Layer 1 programmatic checks and Layer 2 judges, one per dimension |
 | `datasets.py` | Labeled offline cases |
 | `run_eval.py` | Offline experiment + CI gate |
-| `gold_sets.py` | Layer 3: human-labeled cases, one set per judge |
+| `gold_sets.py` | Layer 3: human-labeled cases for the faithfulness and over-refusal judges |
 | `calibrate.py` | Layer 3: judge vs. human labels, agreement + Cohen's kappa |
-| `online.py` | Same evaluators on live traffic, judges sampled at 5% |
+| `online.py` | The label-free evaluators on live traffic, judges sampled at 5% |
 
 ## Running
 
 ```sh
-uv run python -m support_eval.calibrate                # grade every judge
+cp .env.example .env    # then fill in GOOGLE_API_KEY; config raises at import without it
+```
+
+```sh
+uv run python -m support_eval.calibrate                # grade every judge with a gold set
 uv run python -m support_eval.calibrate over_refusal   # grade one
 uv run python -m support_eval.run_eval                 # does the agent pass its gates?
 ```
@@ -35,12 +39,15 @@ output, and both scripts exit non-zero on failure.
 
 Layer 1, deterministic:
 
-- `retrieval_recall` — the policies that answer the question were retrieved
+- `retrieval_recall` — the policies that answer the question were retrieved (offline only)
 - `escalation_correct` — action taken matches the human label (offline only)
 - `citations_grounded` — cited IDs exist in retrieved evidence
 - `cites_when_answering` — an answer cites something
 - `used_policy_lookup` — the retrieval tool ran exactly once
-- `within_length_budget` — answer under 80 words
+- `within_length_budget` — answer at most 80 words
+
+The two offline-only checks read `CaseMeta`, which live traffic has no
+equivalent of, so `online.py` runs the other four.
 
 Layer 2, judge-backed, gated below 100% because judges are stochastic:
 
@@ -49,7 +56,10 @@ Layer 2, judge-backed, gated below 100% because judges are stochastic:
 - `concise` — no wasted sentences
 
 Layer 3, `calibrate.py`: replays saved outputs through the judge and compares
-against human labels.
+against human labels. Gold sets exist for `faithful_to_policy` and
+`not_over_refusing`. **`concise` is gated without one** — build that set before
+treating its threshold as meaningful, since an uncalibrated judge behind a gate
+is the thing Layer 3 exists to prevent.
 
 ## Design notes
 
@@ -88,10 +98,10 @@ OpenAI-compatible endpoint.
 | `{ROLE}_PROVIDER` | `google` (default) or `openai` |
 | `{ROLE}_MODEL` | model name as that provider spells it |
 | `{ROLE}_BASE_URL` | OpenAI-compatible endpoint; required when provider is `openai` |
-| `{ROLE}_API_KEY` | falls back to `OPENAI_API_KEY` / `GOOGLE_API_KEY` |
+| `{ROLE}_API_KEY` | falls back to `OPENAI_API_KEY`, or `GOOGLE_API_KEY` / `GEMINI_API_KEY` |
 | `{ROLE}_STRUCTURED_OUTPUT` | `tool` \| `native` \| `prompted` — for endpoints with partial OpenAI support |
 | `{ROLE}_STRICT_TOOLS` | `true` (default) / `false` — many open-weight endpoints reject `strict: true` |
-| `{ROLE}_TEMPERATURE` | float; the judge defaults to `0.0` |
+| `{ROLE}_TEMPERATURE` | float; the judge defaults to `0.0`, the target to the provider default |
 
 `{ROLE}` is `TARGET` or `JUDGE`. Bad values raise at import, before a run spends
 money. `GEMINI_MODEL` is still honoured as the target model name.

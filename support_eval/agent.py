@@ -9,7 +9,7 @@ import logfire
 from pydantic import BaseModel
 from pydantic_ai import Agent, RunContext
 
-from support_eval.config import TARGET_MODEL
+from support_eval.config import TARGET_MODEL, TARGET_SETTINGS
 from support_eval.policies import retrieve
 
 logfire.configure(service_name='customer-support-eval', console=False)
@@ -43,6 +43,7 @@ class SupportDeps:
 
 support_agent = Agent(
     TARGET_MODEL,
+    model_settings=TARGET_SETTINGS or None,
     deps_type=SupportDeps,
     output_type=SupportAnswer,
     system_prompt=(

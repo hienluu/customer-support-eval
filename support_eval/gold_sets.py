@@ -1,4 +1,4 @@
-"""Human-labeled gold sets, one per judge.
+"""Human-labeled gold sets for the judges that gate on correctness.
 
 Each set is saved agent output plus a human verdict. Nothing here calls the
 agent: `saved()` reconstructs an output by hand so the calibration harness can
@@ -6,6 +6,12 @@ replay it and attribute any disagreement to the judge alone.
 
 A set is only useful if it contains the failures. A judge that has never been
 shown a bad output cannot be shown to discriminate.
+
+The conciseness judge has no gold set, so its gate in `run_eval.py` rests on an
+uncalibrated instrument. That is a deliberate, and temporary, gap: the two
+judges here can ship a hallucinated policy or hide a refusing agent, while a
+miscalibrated concision score costs a needlessly red build. Build the third set
+before treating `concise` as a real gate.
 """
 
 from __future__ import annotations
